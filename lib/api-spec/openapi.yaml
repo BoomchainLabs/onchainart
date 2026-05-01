@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: art
+    description: OnChainArt NFT operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,121 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /art/deployments:
+    get:
+      operationId: listDeployments
+      tags: [art]
+      summary: List known contract deployments
+      responses:
+        "200":
+          description: List of deployments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Deployment"
+
+    post:
+      operationId: saveDeployment
+      tags: [art]
+      summary: Save a contract deployment record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveDeploymentBody"
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+
+  /art/deployments/{id}:
+    get:
+      operationId: getDeployment
+      tags: [art]
+      summary: Get a deployment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deployment found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /art/mints:
+    get:
+      operationId: listMints
+      tags: [art]
+      summary: List recent mint activity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: deploymentId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Mint records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MintRecord"
+
+    post:
+      operationId: recordMint
+      tags: [art]
+      summary: Record a mint event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordMintBody"
+      responses:
+        "201":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MintRecord"
+
+  /art/stats:
+    get:
+      operationId: getStats
+      tags: [art]
+      summary: Get aggregate stats (total mints, deployments, unique artists)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +151,123 @@ components:
       required:
         - status
 
+    Deployment:
+      type: object
+      properties:
+        id:
+          type: integer
+        contractAddress:
+          type: string
+        chainId:
+          type: integer
+        network:
+          type: string
+        deployerAddress:
+          type: string
+        mintPrice:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - contractAddress
+        - chainId
+        - network
+        - deployerAddress
+        - mintPrice
+        - createdAt
+
+    SaveDeploymentBody:
+      type: object
+      properties:
+        contractAddress:
+          type: string
+        chainId:
+          type: integer
+        network:
+          type: string
+        deployerAddress:
+          type: string
+        mintPrice:
+          type: string
+      required:
+        - contractAddress
+        - chainId
+        - network
+        - deployerAddress
+        - mintPrice
+
+    MintRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        deploymentId:
+          type: integer
+        tokenId:
+          type: integer
+        title:
+          type: string
+        artistAddress:
+          type: string
+        txHash:
+          type: string
+        mintedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - deploymentId
+        - tokenId
+        - title
+        - artistAddress
+        - txHash
+        - mintedAt
+
+    RecordMintBody:
+      type: object
+      properties:
+        deploymentId:
+          type: integer
+        tokenId:
+          type: integer
+        title:
+          type: string
+        artistAddress:
+          type: string
+        txHash:
+          type: string
+      required:
+        - deploymentId
+        - tokenId
+        - title
+        - artistAddress
+        - txHash
+
+    ArtStats:
+      type: object
+      properties:
+        totalMints:
+          type: integer
+        totalDeployments:
+          type: integer
+        uniqueArtists:
+          type: integer
+        recentMints:
+          type: array
+          items:
+            $ref: "#/components/schemas/MintRecord"
+      required:
+        - totalMints
+        - totalDeployments
+        - uniqueArtists
+        - recentMints
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

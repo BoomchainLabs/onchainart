@@ -5,18 +5,30 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ArtStats,
+  Deployment,
+  ErrorResponse,
+  HealthStatus,
+  ListMintsParams,
+  MintRecord,
+  RecordMintBody,
+  SaveDeploymentBody,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +104,499 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List known contract deployments
+ */
+export const getListDeploymentsUrl = () => {
+  return `/api/art/deployments`;
+};
+
+export const listDeployments = async (
+  options?: RequestInit,
+): Promise<Deployment[]> => {
+  return customFetch<Deployment[]>(getListDeploymentsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListDeploymentsQueryKey = () => {
+  return [`/api/art/deployments`] as const;
+};
+
+export const getListDeploymentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDeployments>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listDeployments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDeploymentsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDeployments>>> = ({
+    signal,
+  }) => listDeployments({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDeployments>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListDeploymentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listDeployments>>
+>;
+export type ListDeploymentsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List known contract deployments
+ */
+
+export function useListDeployments<
+  TData = Awaited<ReturnType<typeof listDeployments>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listDeployments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDeploymentsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save a contract deployment record
+ */
+export const getSaveDeploymentUrl = () => {
+  return `/api/art/deployments`;
+};
+
+export const saveDeployment = async (
+  saveDeploymentBody: SaveDeploymentBody,
+  options?: RequestInit,
+): Promise<Deployment> => {
+  return customFetch<Deployment>(getSaveDeploymentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveDeploymentBody),
+  });
+};
+
+export const getSaveDeploymentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveDeployment>>,
+    TError,
+    { data: BodyType<SaveDeploymentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveDeployment>>,
+  TError,
+  { data: BodyType<SaveDeploymentBody> },
+  TContext
+> => {
+  const mutationKey = ["saveDeployment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveDeployment>>,
+    { data: BodyType<SaveDeploymentBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return saveDeployment(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveDeploymentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveDeployment>>
+>;
+export type SaveDeploymentMutationBody = BodyType<SaveDeploymentBody>;
+export type SaveDeploymentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Save a contract deployment record
+ */
+export const useSaveDeployment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveDeployment>>,
+    TError,
+    { data: BodyType<SaveDeploymentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveDeployment>>,
+  TError,
+  { data: BodyType<SaveDeploymentBody> },
+  TContext
+> => {
+  return useMutation(getSaveDeploymentMutationOptions(options));
+};
+
+/**
+ * @summary Get a deployment by ID
+ */
+export const getGetDeploymentUrl = (id: number) => {
+  return `/api/art/deployments/${id}`;
+};
+
+export const getDeployment = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Deployment> => {
+  return customFetch<Deployment>(getGetDeploymentUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDeploymentQueryKey = (id: number) => {
+  return [`/api/art/deployments/${id}`] as const;
+};
+
+export const getGetDeploymentQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDeployment>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDeployment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDeploymentQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeployment>>> = ({
+    signal,
+  }) => getDeployment(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDeployment>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDeploymentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDeployment>>
+>;
+export type GetDeploymentQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a deployment by ID
+ */
+
+export function useGetDeployment<
+  TData = Awaited<ReturnType<typeof getDeployment>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDeployment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDeploymentQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List recent mint activity
+ */
+export const getListMintsUrl = (params?: ListMintsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/art/mints?${stringifiedParams}`
+    : `/api/art/mints`;
+};
+
+export const listMints = async (
+  params?: ListMintsParams,
+  options?: RequestInit,
+): Promise<MintRecord[]> => {
+  return customFetch<MintRecord[]>(getListMintsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMintsQueryKey = (params?: ListMintsParams) => {
+  return [`/api/art/mints`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMintsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMints>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMintsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMints>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMintsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMints>>> = ({
+    signal,
+  }) => listMints(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMints>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMintsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMints>>
+>;
+export type ListMintsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List recent mint activity
+ */
+
+export function useListMints<
+  TData = Awaited<ReturnType<typeof listMints>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMintsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMints>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMintsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Record a mint event
+ */
+export const getRecordMintUrl = () => {
+  return `/api/art/mints`;
+};
+
+export const recordMint = async (
+  recordMintBody: RecordMintBody,
+  options?: RequestInit,
+): Promise<MintRecord> => {
+  return customFetch<MintRecord>(getRecordMintUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(recordMintBody),
+  });
+};
+
+export const getRecordMintMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordMint>>,
+    TError,
+    { data: BodyType<RecordMintBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recordMint>>,
+  TError,
+  { data: BodyType<RecordMintBody> },
+  TContext
+> => {
+  const mutationKey = ["recordMint"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordMint>>,
+    { data: BodyType<RecordMintBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recordMint(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordMintMutationResult = NonNullable<
+  Awaited<ReturnType<typeof recordMint>>
+>;
+export type RecordMintMutationBody = BodyType<RecordMintBody>;
+export type RecordMintMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Record a mint event
+ */
+export const useRecordMint = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordMint>>,
+    TError,
+    { data: BodyType<RecordMintBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof recordMint>>,
+  TError,
+  { data: BodyType<RecordMintBody> },
+  TContext
+> => {
+  return useMutation(getRecordMintMutationOptions(options));
+};
+
+/**
+ * @summary Get aggregate stats (total mints, deployments, unique artists)
+ */
+export const getGetStatsUrl = () => {
+  return `/api/art/stats`;
+};
+
+export const getStats = async (options?: RequestInit): Promise<ArtStats> => {
+  return customFetch<ArtStats>(getGetStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetStatsQueryKey = () => {
+  return [`/api/art/stats`] as const;
+};
+
+export const getGetStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStats>>> = ({
+    signal,
+  }) => getStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStats>>
+>;
+export type GetStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get aggregate stats (total mints, deployments, unique artists)
+ */
+
+export function useGetStats<
+  TData = Awaited<ReturnType<typeof getStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetStatsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

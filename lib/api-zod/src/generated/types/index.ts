@@ -6,4 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./artStats";
+export * from "./deployment";
+export * from "./errorResponse";
 export * from "./healthStatus";
+export * from "./listMintsParams";
+export * from "./mintRecord";
+export * from "./recordMintBody";
+export * from "./saveDeploymentBody";

@@ -8,3 +8,55 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Deployment {
+  id: number;
+  contractAddress: string;
+  chainId: number;
+  network: string;
+  deployerAddress: string;
+  mintPrice: string;
+  createdAt: string;
+}
+
+export interface SaveDeploymentBody {
+  contractAddress: string;
+  chainId: number;
+  network: string;
+  deployerAddress: string;
+  mintPrice: string;
+}
+
+export interface MintRecord {
+  id: number;
+  deploymentId: number;
+  tokenId: number;
+  title: string;
+  artistAddress: string;
+  txHash: string;
+  mintedAt: string;
+}
+
+export interface RecordMintBody {
+  deploymentId: number;
+  tokenId: number;
+  title: string;
+  artistAddress: string;
+  txHash: string;
+}
+
+export interface ArtStats {
+  totalMints: number;
+  totalDeployments: number;
+  uniqueArtists: number;
+  recentMints: MintRecord[];
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export type ListMintsParams = {
+  limit?: number;
+  deploymentId?: number;
+};

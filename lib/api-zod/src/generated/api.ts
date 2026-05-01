@@ -14,3 +14,97 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List known contract deployments
+ */
+export const ListDeploymentsResponseItem = zod.object({
+  id: zod.number(),
+  contractAddress: zod.string(),
+  chainId: zod.number(),
+  network: zod.string(),
+  deployerAddress: zod.string(),
+  mintPrice: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListDeploymentsResponse = zod.array(ListDeploymentsResponseItem);
+
+/**
+ * @summary Save a contract deployment record
+ */
+export const SaveDeploymentBody = zod.object({
+  contractAddress: zod.string(),
+  chainId: zod.number(),
+  network: zod.string(),
+  deployerAddress: zod.string(),
+  mintPrice: zod.string(),
+});
+
+/**
+ * @summary Get a deployment by ID
+ */
+export const GetDeploymentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetDeploymentResponse = zod.object({
+  id: zod.number(),
+  contractAddress: zod.string(),
+  chainId: zod.number(),
+  network: zod.string(),
+  deployerAddress: zod.string(),
+  mintPrice: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List recent mint activity
+ */
+export const listMintsQueryLimitDefault = 20;
+
+export const ListMintsQueryParams = zod.object({
+  limit: zod.coerce.number().default(listMintsQueryLimitDefault),
+  deploymentId: zod.coerce.number().optional(),
+});
+
+export const ListMintsResponseItem = zod.object({
+  id: zod.number(),
+  deploymentId: zod.number(),
+  tokenId: zod.number(),
+  title: zod.string(),
+  artistAddress: zod.string(),
+  txHash: zod.string(),
+  mintedAt: zod.coerce.date(),
+});
+export const ListMintsResponse = zod.array(ListMintsResponseItem);
+
+/**
+ * @summary Record a mint event
+ */
+export const RecordMintBody = zod.object({
+  deploymentId: zod.number(),
+  tokenId: zod.number(),
+  title: zod.string(),
+  artistAddress: zod.string(),
+  txHash: zod.string(),
+});
+
+/**
+ * @summary Get aggregate stats (total mints, deployments, unique artists)
+ */
+export const GetStatsResponse = zod.object({
+  totalMints: zod.number(),
+  totalDeployments: zod.number(),
+  uniqueArtists: zod.number(),
+  recentMints: zod.array(
+    zod.object({
+      id: zod.number(),
+      deploymentId: zod.number(),
+      tokenId: zod.number(),
+      title: zod.string(),
+      artistAddress: zod.string(),
+      txHash: zod.string(),
+      mintedAt: zod.coerce.date(),
+    }),
+  ),
+});

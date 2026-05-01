@@ -1,2 +1,9 @@
 export * from "./generated/api";
-export * from "./generated/types";
+export type {
+  ArtStats,
+  Deployment,
+  ErrorResponse,
+  HealthStatus,
+  ListMintsParams,
+  MintRecord,
+} from "./generated/types";
